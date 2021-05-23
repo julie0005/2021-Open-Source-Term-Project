@@ -39,6 +39,9 @@ def pt(hand, dst):
             maxcnt = cnt
     cv2.drawContours(dst, [maxcnt], 0, (0, 0, 255), 2) #가장 큰 영역의 윤곽선 그려주기
 
+
+
+
     points1 = []
     result_cx = []
     result_cy = []
@@ -70,5 +73,5 @@ def pt(hand, dst):
     finger_count = len(points1) #손가락 개수 counting
     
     cv2.imshow('dst', dst) #결과를 담은 영상 출력
-
+    print(finger_count)
     return finger_count
