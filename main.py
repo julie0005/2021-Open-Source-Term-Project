@@ -8,8 +8,8 @@ cap = cv2.VideoCapture(0) #카메라를 VideoCapture 타입의 객체로 반환(
 print(cap.get(3), cap.get(4))
 
 #가로 세로의 크기: 320x240
-ret = cap.set(3,320)
-ret = cap.set(4,240)
+ret = cap.set(3,640)
+ret = cap.set(4,480)
 
 while(True):
     ret, frame = cap.read() #카메라로부터 현재 영상 하나를 읽어옴
@@ -19,7 +19,7 @@ while(True):
     
     #finger_tracking(은주)
     finger_count = ft.pt(hand, dst) #-> 함수 이름 적당한 걸로 바꾸기
-    
+
     # print(finger_count) # 손가락 개수 출력
 
     #mapping(윤정)
