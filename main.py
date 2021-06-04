@@ -19,7 +19,7 @@ while(True):
     
     #finger_tracking(은주)
     finger_count = ft.pt(hand, dst) #-> 함수 이름 적당한 걸로 바꾸기
-    
+
     # print(finger_count) # 손가락 개수 출력
 
     #mapping(윤정)
