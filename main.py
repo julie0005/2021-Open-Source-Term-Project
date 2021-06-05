@@ -161,13 +161,13 @@ while(True):
     #finger_tracking(은주)
     finger_count = ft.pt(hand, dst) #-> 함수 이름 적당한 걸로 바꾸기
 
-    # print(finger_count) # 손가락 개수 출력
+    print(finger_count) # 손가락 개수 출력
 
-    #mapping(윤정)
-    #cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
+    mapping(윤정)
+    cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
 
-    # if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
-    #     break
+    if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
+        break
 
 cap.release()
 cv2.destroyAllWindows()
