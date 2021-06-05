@@ -1,13 +1,13 @@
 import numpy as np
 import cv2
-import hand_tracking as ht
+import filter as ft
 import finger_tracking as ft
 import mapping as mp
 
 classes = ["Hand"]
 def yolo(frame, score_threshold, nms_threshold):
     # YOLO 네트워크 불러오기
-    net = cv2.dnn.readNet("./yolov4-tiny_best.weights", "./yolov4-tiny.cfg")
+    net = cv2.dnn.readNet("./yolov4-tiny2_best.weights", "./yolov4-tiny2.cfg")
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
@@ -147,15 +147,13 @@ while(True):
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
-    frame,frame2=yolo(frame=frame,score_threshold=0.33,nms_threshold=0.5)
+    frame,frame2=yolo(frame=frame,score_threshold=0.4,nms_threshold=0.5)
     cv2.imshow('original',frame)
     if len(frame2)==0:
         print(len(frame2))
         continue
     
-    
-    
-    hand, dst = ht.pt(frame2) #-> 함수 이름 적당한 걸로 바꾸기
+    hand, dst = ft.pt(frame2) #-> 함수 이름 적당한 걸로 바꾸기
     
     #finger_tracking(은주)
     finger_count = ft.pt(hand, dst) #-> 함수 이름 적당한 걸로 바꾸기
