@@ -11,6 +11,8 @@ print(cap.get(3), cap.get(4))
 ret = cap.set(3,320)
 ret = cap.set(4,240)
 
+cnt = 0
+prev_finger_count = 0
 while(True):
     ret, frame = cap.read() #카메라로부터 현재 영상 하나를 읽어옴
 
@@ -23,9 +25,9 @@ while(True):
     # print(finger_count) # 손가락 개수 출력
 
     #mapping(윤정)
-    mp.pt(finger_count) #-> 함수 이름 적당한 걸로 바꾸기
+    cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
         break
 
 cap.release()
