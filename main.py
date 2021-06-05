@@ -14,8 +14,8 @@ def yolo(frame, score_threshold, nms_threshold):
     # 이미지의 높이, 너비, 채널 받아오기
     height, width, channels = frame.shape
 
-    colors = np.random.uniform(0, 255, size=(len(classes), 3))
-
+    colors = [[0,0,255]]
+    print(colors)
     # 네트워크에 넣기 위한 전처리
     blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
 
@@ -90,12 +90,12 @@ def yolo(frame, score_threshold, nms_threshold):
             ystart= 0 if yi<0 or yend==640 else yi
 
             
-            frame2=frame[ystart:yend, xstart:xend]
+            frame2=frame[ystart:yend, xstart:xend].copy()
             
             cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
             cv2.rectangle(frame, (x - 1, y), (x + len(class_name) * 13 + 65, y - 25), color, -1)
             cv2.putText(frame, label, (x, y - 8), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0), 2)
-            
+            cv2.imshow('print',frame2)
             # 탐지된 객체의 정보 출력
             print(f"[{class_name}({index})] conf: {confidences[index]} / x: {x} / y: {y} / width: {w} / height: {h}")
             return frame,frame2
@@ -118,12 +118,12 @@ def yolo(frame, score_threshold, nms_threshold):
         xstart= 0 if xi<0 or xend==480 else xi
         ystart= 0 if yi<0 or yend==640 else yi
         
-        frame2=frame[ystart:yend, xstart:xend]
-        
+        frame2=frame[ystart:yend, xstart:xend].copy()
+       
         cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
         cv2.rectangle(frame, (x - 1, y), (x + len(class_name) * 13 + 65, y - 25), color, -1)
         cv2.putText(frame, label, (x, y - 8), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0), 2)
-        
+        cv2.imshow('just frame',frame2)
         # 탐지된 객체의 정보 출력
         print(f"[{class_name}({index})] conf: {confidences[index]} / x: {x} / y: {y} / width: {w} / height: {h}")
         return frame,frame2
@@ -145,6 +145,7 @@ prev_finger_count = 0
 while(True):
     ret, frame = cap.read() #카메라로부터 현재 영상 하나를 읽어옴
     
+
     #hand_tracking(승은) 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -163,10 +164,10 @@ while(True):
     # print(finger_count) # 손가락 개수 출력
 
     #mapping(윤정)
-    cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
+    #cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
 
-    if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
-        break
+    # if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
+    #     break
 
 cap.release()
 cv2.destroyAllWindows()

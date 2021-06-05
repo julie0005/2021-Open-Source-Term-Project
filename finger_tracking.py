@@ -42,8 +42,6 @@ def pt(hand, dst):
             maxcnt = cnt
             save=cntt
         cntt+=1
-    
-    
 
     #cv2.drawContours(dst, [maxcnt], -1, (0, 0, 255), 2) #가장 큰 영역의 윤곽선 그려주기
     

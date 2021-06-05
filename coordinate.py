@@ -1,113 +1,159 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Feb 16 12:44:06 2019
+
+@author: Cajetan Rodrigues
+"""
+
 import cv2
 import numpy as np
-
-def yolo(frame, score_threshold, nms_threshold):
-    # YOLO 네트워크 불러오기
-    net = cv2.dnn.readNet("./yolov4-tiny_best.weights", "./yolov4-tiny.cfg")
-    layer_names = net.getLayerNames()
-    output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-
-    # 클래스의 갯수만큼 랜덤 RGB 배열을 생성
-    colors = np.random.uniform(0, 255, size=(len(classes), 3))
-
-    # 이미지의 높이, 너비, 채널 받아오기
-    height, width, channels = frame.shape
-
-    # 네트워크에 넣기 위한 전처리
-    blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-
-    # 전처리된 blob 네트워크에 입력
-    net.setInput(blob)
-
-    # 결과 받아오기
-    outs = net.forward(output_layers)
-
-    # 각각의 데이터를 저장할 빈 리스트
-    class_ids = []
-    confidences = []
-    boxes = []
-
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-
-            if confidence > 0.1:
-                # 탐지된 객체의 너비, 높이 및 중앙 좌표값 찾기
-                center_x = int(detection[0] * width)
-                center_y = int(detection[1] * height)
-                w = int(detection[2] * width)
-                h = int(detection[3] * height)
-
-                # 객체의 사각형 테두리 중 좌상단 좌표값 찾기
-                x = int(center_x - w / 2)
-                y = int(center_y - h / 2)
-
-                boxes.append([x, y, w, h])
-                confidences.append(float(confidence))
-                class_ids.append(class_id)
-
-    # 후보 박스(x, y, width, height)와 confidence(상자가 물체일 확률) 출력
-    print(f"boxes: {boxes}")
-    print(f"confidences: {confidences}")
-
-    # Non Maximum Suppression (겹쳐있는 박스 중 confidence 가 가장 높은 박스를 선택)
-    indexes = cv2.dnn.NMSBoxes(boxes, confidences, score_threshold=score_threshold, nms_threshold=nms_threshold)
+import math
+cap = cv2.VideoCapture(0)
+     
+while(1):
+        
+     #an error comes if it does not find anything in window as it cannot find contour of max area
+          #therefore this try error statement
+          
+    ret, frame = cap.read()
+    frame=cv2.flip(frame,1)
+    kernel = np.ones((3,3),np.uint8)
     
-    # 후보 박스 중 선택된 박스의 인덱스 출력
-    print(f"indexes: ", end='')
-    for index in indexes:
-        print(index, end=' ')
-    print("\n\n============================== classes ==============================")
+    #define region of interest
+    roi=frame[100:300, 100:300]
     
-    for i in range(len(boxes)):
-        if i in indexes:
-            x, y, w, h = boxes[i]
-            class_name = classes[class_ids[i]]
-            label = f"{class_name} {confidences[i]:.2f}"
-            color = colors[class_ids[i]]
+    
+    cv2.rectangle(frame,(100,100),(300,300),(0,255,0),0)    
+    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+    
+    
+        
+# define range of skin color in HSV
+    lower_skin = np.array([0,20,70], dtype=np.uint8)
+    upper_skin = np.array([20,255,255], dtype=np.uint8)
+    
+    #extract skin colur imagw  
+    mask = cv2.inRange(hsv, lower_skin, upper_skin)
+    
 
-            # 사각형 테두리 그리기 및 텍스트 쓰기
-            cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-            cv2.rectangle(frame, (x - 1, y), (x + len(class_name) * 13 + 65, y - 25), color, -1)
-            cv2.putText(frame, label, (x, y - 8), cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 0), 2)
-            
-            # 탐지된 객체의 정보 출력
-            print(f"[{class_name}({i})] conf: {confidences[i]} / x: {x} / y: {y} / width: {w} / height: {h}")
+    
+#extrapolate the hand to fill dark spots within
+    mask = cv2.dilate(mask,kernel,iterations = 4)
+    
+#blur the image
+    mask = cv2.GaussianBlur(mask,(5,5),100) 
+    
+    
+    
+#find contours
+    contours,hierarchy= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
-    return frame
+#find contour of max area(hand)
+    cnt = max(contours, key = lambda x: cv2.contourArea(x))
+    
+#approx the contour a little
+    epsilon = 0.0005*cv2.arcLength(cnt,True)
+    approx= cv2.approxPolyDP(cnt,epsilon,True)
+    
+    
+#make convex hull around hand
+    hull = cv2.convexHull(cnt)
+    
+    #define area of hull and area of hand
+    areahull = cv2.contourArea(hull)
+    areacnt = cv2.contourArea(cnt)
+    
+#find the percentage of area not covered by hand in convex hull
+    arearatio=((areahull-areacnt)/areacnt)*100
 
-
-# 클래스 리스트
-classes = ["Human_hand"]
-
-# # 이미지 경로
-# office = "test_pic1.jpg"
-
-# # 이미지 읽어오기
-# frame = cv2.imread(office)
-# frame = cv2.resize(frame, None, fx=0.4, fy=0.4)
-# # 입력 사이즈 리스트 (Yolo 에서 사용되는 네크워크 입력 이미지 사이즈)
-# size_list = [320, 416, 608]
-
-# frame = yolo(frame=frame,  score_threshold=0.3, nms_threshold=0.5)
-# cv2.imshow("Output_Yolo", frame)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-
-cap=cv2.VideoCapture(0)
-cap.set(3,720)
-cap.set(4,1080)
-
-while True:
-    ret, frame=cap.read()
-    frame=yolo(frame=frame,score_threshold=0.33,nms_threshold=0.5)
-    cv2.imshow('test',frame)
-
-    k=cv2.waitKey(1)
-    if k==27:
+    #find the defects in convex hull with respect to hand
+    hull = cv2.convexHull(approx, returnPoints=False)
+    defects = cv2.convexityDefects(approx, hull)
+    
+# l = no. of defects
+    l=0
+    
+#code for finding no. of defects due to fingers
+    for i in range(defects.shape[0]):
+        s,e,f,d = defects[i,0]
+        start = tuple(approx[s][0])
+        end = tuple(approx[e][0])
+        far = tuple(approx[f][0])
+        pt= (100,180)
+        
+        
+        # find length of all sides of triangle
+        a = math.sqrt((end[0] - start[0])**2 + (end[1] - start[1])**2)
+        b = math.sqrt((far[0] - start[0])**2 + (far[1] - start[1])**2)
+        c = math.sqrt((end[0] - far[0])**2 + (end[1] - far[1])**2)
+        s = (a+b+c)/2
+        ar = math.sqrt(s*(s-a)*(s-b)*(s-c))
+        
+        #distance between point and convex hull
+        d=(2*ar)/a
+        
+        # apply cosine rule here
+        angle = math.acos((b**2 + c**2 - a**2)/(2*b*c)) * 57
+        
+    
+        # ignore angles > 90 and ignore points very close to convex hull(they generally come due to noise)
+        if angle <= 90 and d>30:
+            l += 1
+            cv2.circle(roi, far, 3, [255,0,0], -1)
+        
+        #draw lines around hand
+        cv2.line(roi,start, end, [0,255,0], 2)
+        
+        
+    l+=1
+    
+    #print corresponding gestures which are in their ranges
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    if l==1:
+        if areacnt<2000:
+            cv2.putText(frame,'Put hand in the box',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        else:
+            if arearatio<12:
+                cv2.putText(frame,'0',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            elif arearatio<17.5:
+                cv2.putText(frame,'Best of luck',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                
+            else:
+                cv2.putText(frame,'1',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                
+    elif l==2:
+        cv2.putText(frame,'2',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        
+    elif l==3:
+        
+            if arearatio<27:
+                cv2.putText(frame,'3',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            else:
+                cv2.putText(frame,'ok',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                
+    elif l==4:
+        cv2.putText(frame,'4',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        
+    elif l==5:
+        cv2.putText(frame,'5',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        
+    elif l==6:
+        cv2.putText(frame,'reposition',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        
+    else :
+        cv2.putText(frame,'reposition',(10,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+        
+    #show the windows
+    cv2.imshow('mask',mask)
+    cv2.imshow('frame',frame)
+    
+        
+    
+    k = cv2.waitKey(5) & 0xFF
+    if k == 27:
         break
+    
+cv2.destroyAllWindows()
+cap.release()    
+    
 
-cap.release()
-cap.destroyAllWindows()
