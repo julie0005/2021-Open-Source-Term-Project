@@ -15,10 +15,9 @@ def pt(frame):
     # # 침식 연산 적용 ---②
     # erosion = cv2.erode(mask_hand, k)
     ###
-    frame=frame[100:600, 200:400]
+
     ### HSV방법으로 색공간 변경
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #BGR 값을 HSV 값으로 변경
-
     ##테스트 필요
     hue = np.array([0, 48, 80])
     hue2 = np.array([20, 255, 255]) #손 색깔
