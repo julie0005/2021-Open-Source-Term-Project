@@ -3,6 +3,7 @@ import cv2
 import filtering as ht
 import finger_tracking as ft
 import mapping as mp
+import time
 
 classes = ["Hand"]
 def yolo(frame, score_threshold, nms_threshold):
@@ -142,15 +143,23 @@ ret = cap.set(4,480)
 
 cnt = 0
 prev_finger_count = 0
+prev_time=0
 while(True):
     ret, frame = cap.read() #카메라로부터 현재 영상 하나를 읽어옴
     
-
     #hand_tracking(승은) 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
     frame,frame2=yolo(frame=frame,score_threshold=0.4,nms_threshold=0.5)
+    cur_time=time.time()
+    sec=cur_time-prev_time
+    prev_time=cur_time
+    fps=1/(sec)
+    print("Time {0} " . format(sec))
+    print("Estimated fps {0}".format(fps))
+    str="FPS : %0.1f"%fps
+    cv2.putText(frame,str,(0,100),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
     cv2.imshow('original',frame)
     if len(frame2)==0:
         print(len(frame2))
@@ -163,7 +172,7 @@ while(True):
 
     print(finger_count) # 손가락 개수 출력
 
-    mapping(윤정)
+    #mapping(윤정)
     cnt, prev_finger_count, end_signal = mp.pt(cnt, prev_finger_count, finger_count) #-> 함수 이름 적당한 걸로 바꾸기
 
     if end_signal == 1 or (cv2.waitKey(1) & 0xFF == ord('q')):
